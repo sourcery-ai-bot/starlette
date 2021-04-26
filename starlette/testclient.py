@@ -353,10 +353,7 @@ class WebSocketTestSession:
         assert mode in ["text", "binary"]
         message = self.receive()
         self._raise_on_close(message)
-        if mode == "text":
-            text = message["text"]
-        else:
-            text = message["bytes"].decode("utf-8")
+        text = message["text"] if mode == "text" else message["bytes"].decode("utf-8")
         return json.loads(text)
 
 

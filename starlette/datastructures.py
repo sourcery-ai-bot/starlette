@@ -180,11 +180,7 @@ class URLPath(str):
         else:
             scheme = base_url.scheme
 
-        if self.host:
-            netloc = self.host
-        else:
-            netloc = base_url.netloc
-
+        netloc = self.host or base_url.netloc
         path = base_url.path.rstrip("/") + str(self)
         return str(URL(scheme=scheme, netloc=netloc, path=path))
 
@@ -231,7 +227,7 @@ class CommaSeparatedStrings(Sequence):
         return f"{class_name}({items!r})"
 
     def __str__(self) -> str:
-        return ", ".join([repr(item) for item in self])
+        return ", ".join(repr(item) for item in self)
 
 
 class ImmutableMultiDict(typing.Mapping):
@@ -246,11 +242,7 @@ class ImmutableMultiDict(typing.Mapping):
     ) -> None:
         assert len(args) < 2, "Too many arguments."
 
-        if args:
-            value = args[0]
-        else:
-            value = []
-
+        value = args[0] if args else []
         if kwargs:
             value = (
                 ImmutableMultiDict(value).multi_items()
@@ -551,10 +543,9 @@ class Headers(typing.Mapping[str, str]):
 
     def __contains__(self, key: typing.Any) -> bool:
         get_header_key = key.lower().encode("latin-1")
-        for header_key, header_value in self._list:
-            if header_key == get_header_key:
-                return True
-        return False
+        return any(
+            header_key == get_header_key for header_key, header_value in self._list
+        )
 
     def __iter__(self) -> typing.Iterator[typing.Any]:
         return iter(self.keys())
@@ -584,10 +575,11 @@ class MutableHeaders(Headers):
         set_key = key.lower().encode("latin-1")
         set_value = value.encode("latin-1")
 
-        found_indexes = []
-        for idx, (item_key, item_value) in enumerate(self._list):
-            if item_key == set_key:
-                found_indexes.append(idx)
+        found_indexes = [
+            idx
+            for idx, (item_key, item_value) in enumerate(self._list)
+            if item_key == set_key
+        ]
 
         for idx in reversed(found_indexes[1:]):
             del self._list[idx]
@@ -604,10 +596,11 @@ class MutableHeaders(Headers):
         """
         del_key = key.lower().encode("latin-1")
 
-        pop_indexes = []
-        for idx, (item_key, item_value) in enumerate(self._list):
-            if item_key == del_key:
-                pop_indexes.append(idx)
+        pop_indexes = [
+            idx
+            for idx, (item_key, item_value) in enumerate(self._list)
+            if item_key == del_key
+        ]
 
         for idx in reversed(pop_indexes):
             del self._list[idx]
